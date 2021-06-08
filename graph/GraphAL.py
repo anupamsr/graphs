@@ -6,7 +6,7 @@ class GraphAL:
         self.edges = defaultdict(set)
         self.vertices = set()
 
-    def add_edge(self, u, v, w=0):
+    def add_edge(self, u, v, w=1):
         self.edges[u].add((v, w))
         self.edges[v].add((u, w))
         self.vertices.add(u)
@@ -14,9 +14,11 @@ class GraphAL:
 
     def add_edges(self, u, sv, sw=None):
         if sw is None:
-            sw = [0] * len(sv)
-        for v, w in zip(sv, sw):
-            self.add_edge(u, v, w)
+            for v in sv:
+                self.add_edge(u, v)
+        else:
+            for v, w in zip(sv, sw):
+                self.add_edge(u, v, w)
 
     def complement(self):
         g = GraphAL()
@@ -103,15 +105,12 @@ class GraphAL:
         visited = {start_vertex}
         while len(visited) != len(self.vertices):
             min_weighted_edge = min(edges_to_consider, key=lambda x: x[2])
-            start_vertex = (
-                min_weighted_edge[1]
-                if min_weighted_edge[0] in visited
-                else min_weighted_edge[0]
-            )
-            visited.add(start_vertex)
-            edges_to_consider.update(
-                (u, v, w) for u, v, w in set_of_edges if start_vertex in (u, v)
-            )
+            start_vertex = next(filter(lambda x: x not in visited, min_weighted_edge[:2]), None)
+            if start_vertex is not None:
+                g.add_edge(*min_weighted_edge)
+                visited.add(start_vertex)
+                edges_to_consider.update(
+                    (u, v, w) for u, v, w in set_of_edges if start_vertex in (u, v)
+                )
             edges_to_consider.remove(min_weighted_edge)
-            g.add_edge(*min_weighted_edge)
         return g
