@@ -3,21 +3,19 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
-def draw(g: GraphAL):
+def draw_with_kruskal_mst(g: GraphAL):
     if len(g.edges) == 0:
         return
-    G = nx.Graph()
+    nxg = nx.Graph()
     unique_edges = [(u, v, w) for u in g.edges for v, w in g.edges[u] if u < v]
-    gmst = g.minimum_spanning_tree_prim()
-    if gmst.has_cycle():
-        raise Exception("mst has cycle")
-    mst_edges = [(u, v, w) for u in gmst.edges for v, w in gmst.edges[u] if u < v]
+    gmsts = g.minimum_spanning_tree_kruskal()
+    mst_edges = [(u, v, w) for gmst in gmsts for u in gmst.edges for v, w in gmst.edges[u] if u < v]
     print(mst_edges)
     list(map(unique_edges.remove, mst_edges))
-    G.add_weighted_edges_from(unique_edges, color="black")
-    G.add_weighted_edges_from(mst_edges, color="red")
-    colors = nx.get_edge_attributes(G, "color").values()
-    weights = nx.get_edge_attributes(G, "weight").values()
+    nxg.add_weighted_edges_from(unique_edges, color="black")
+    nxg.add_weighted_edges_from(mst_edges, color="red")
+    colors = nx.get_edge_attributes(nxg, "color").values()
+    weights = nx.get_edge_attributes(nxg, "weight").values()
     options = {
         "node_color": "lightblue",
         "edge_color": colors,
@@ -25,13 +23,13 @@ def draw(g: GraphAL):
         "with_labels": True,
     }
     if g.is_bipartite():
-        pos = nx.drawing.layout.bipartite_layout(G, nx.bipartite.sets(G)[0])
+        pos = nx.drawing.layout.bipartite_layout(nxg, nx.bipartite.sets(nxg)[0])
     else:
         try:
-            pos = nx.planar_layout(G)
+            pos = nx.planar_layout(nxg)
         except nx.NetworkXException:
             pos = None
-    nx.draw(G, pos=pos, **options)
+    nx.draw(nxg, pos=pos, **options)
     plt.show()
 
 
@@ -41,7 +39,8 @@ def print_info(g: GraphAL):
     print("is connected", g.is_connected())
     print("is bipartite:", g.is_bipartite())
     print("has cycle:", g.has_cycle())
-    draw(g)
+    print("mst by prim", g.minimum_spanning_tree_prim().edges)
+    draw_with_kruskal_mst(g)
 
 
 def main():
